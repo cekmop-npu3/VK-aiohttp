@@ -1,4 +1,5 @@
 from aiohttp import ClientSession
+from asyncio import run
 from typing import Literal
 
 from Utils import (
@@ -16,10 +17,9 @@ from Utils import (
 
 
 class Client:
-    def __init__(self, login: str, password: str, api_version: str | float = '5.199') -> None:
+    def __init__(self, login: str, password: str) -> None:
         self.login = login
         self.password = password
-        self.v = api_version
         self.cookies = {}
 
     async def anonymToken(self) -> AnonymToken | Error:
@@ -45,7 +45,7 @@ class Client:
 
     async def verificationMethods(self, validation_sid: str, anonym_token: str) -> VerificationMethods | Error:
         """
-        Метод должен обязательно вызываться перед тем, как подтверждать аккаунт другим способом (не через SMS)
+        Метод должен обязательно вызываться перед тем, как подтверждать аккаунт другим способом
         """
         async with ClientSession() as session:
             async with session.post(
@@ -79,7 +79,7 @@ class Client:
                 self.cookies.update(response.cookies)
                 return await jsonHandler(response)
 
-    async def webToken(self, sid: str, anonym_token: str) -> WebToken:
+    async def webToken(self, sid: str, anonym_token: str) -> WebToken | Error:
         async with ClientSession() as session:
             async with session.post(
                 url=ApiEndpoints.authorize,
@@ -91,10 +91,12 @@ class Client:
                 return await jsonHandler(response)
 
     async def auth(self) -> None:
-        token = (await self.anonymToken()).get('token')
-        validate = await self.validateAccount(token)
+        anonym_token = (await self.anonymToken()).get('token')
+        validate = await self.validateAccount(anonym_token)
         validation_sid = validate.get('sid')
         otp_type = validate.get('next_step').get('verification_method')
-        await self.sendOtp(validation_sid, token, otp_type)
-        sid = (await self.checkOtp(input('code: '), validation_sid, token, otp_type)).get('sid')
-        await self.webToken(sid, token)
+        await self.sendOtp(validation_sid, anonym_token, otp_type)
+        await self.verificationMethods(validation_sid, anonym_token)
+        sid = (await self.checkOtp(input('code: '), validation_sid, anonym_token, otp_type)).get('sid')
+        print(await self.webToken(sid, anonym_token))
+        print(self.cookies)

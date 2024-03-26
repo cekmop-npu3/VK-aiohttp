@@ -26,7 +26,7 @@ async def jsonHandler(response: ClientResponse) -> dict | Error:
 
 class ApiEndpoints(ReadOnly):
     """
-    callReset - Звонок-сброс на привязанный номер
+    callreset - Звонок-сброс на привязанный номер
     push - push-уведомление на привязанное устройство
     sms - SMS на привязанный номер
     email - Получить код на почту
@@ -34,7 +34,7 @@ class ApiEndpoints(ReadOnly):
     anonymToken = 'https://api.vk.com/oauth/get_anonym_token'
     validateAccount = 'https://api.vk.com/method/auth.validateAccount'
     verificationMethods = 'https://api.vk.com/method/ecosystem.getVerificationMethods'
-    callReset = 'https://api.vk.com/method/ecosystem.sendOtpCallReset'
+    callreset = 'https://api.vk.com/method/ecosystem.sendOtpCallReset'
     sms = 'https://api.vk.com/method/ecosystem.sendOtpSms'
     push = 'https://api.vk.com/method/ecosystem.sendOtpPush'
     email = 'https://api.vk.com/method/ecosystem.sendOtpEmail'
