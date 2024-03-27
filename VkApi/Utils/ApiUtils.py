@@ -17,11 +17,11 @@ async def jsonHandler(response: ClientResponse) -> dict | Error:
         result = await response.json()
     except ClientResponseError:
         result = loads(await response.text())
-    if r := result.get('error'):
-        return r if isinstance(r, dict) else result
+    if (r := result.get('error')) and isinstance(r, dict):
+        return r
     if r := result.get('response'):
         return r
-    return result if response.status < 400 else {'error_code': -1, 'error_msg': 'Bad request', 'error_text': 'An error occured, try later'}
+    return result
 
 
 class ApiEndpoints(ReadOnly):
@@ -75,7 +75,7 @@ class ApiData(ReadOnly):
         'access_token': ''
     } | data
     checkOTP = {
-        'verification_method': 'sms',
+        'verification_method': '',
         'code': '',
         'sid': '',
         'access_token': '',

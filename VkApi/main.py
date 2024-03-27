@@ -1,5 +1,4 @@
 from aiohttp import ClientSession
-from asyncio import run
 from typing import Literal
 
 from Utils import (
@@ -36,7 +35,7 @@ class Client:
         async with ClientSession() as session:
             async with session.post(
                 url=ApiEndpoints.validateAccount,
-                data=((data := ApiData.validateAccount).update({'login': self.login, 'access_token': anonym_token}), data)[1],
+                data=ApiData.validateAccount | {'login': self.login, 'access_token': anonym_token},
                 headers=ApiData.headers,
                 cookies=self.cookies
             ) as response:
@@ -50,29 +49,29 @@ class Client:
         async with ClientSession() as session:
             async with session.post(
                 url=ApiEndpoints.verificationMethods,
-                data=((data := ApiData.validateAccount).update({'sid': validation_sid, 'access_token': anonym_token}), data)[1],
+                data=ApiData.validateAccount | {'sid': validation_sid, 'access_token': anonym_token},
                 headers=ApiData.headers,
                 cookies=self.cookies
             ) as response:
                 self.cookies.update(response.cookies)
                 return await jsonHandler(response)
 
-    async def sendOtp(self, validation_sid: str, anonym_token: str, otp_type: Literal['callReset', 'sms', 'push', 'email']) -> SendOTP | Error:
+    async def sendOTP(self, validation_sid: str, anonym_token: str, otp_type: Literal['callreset', 'sms', 'push', 'email']) -> SendOTP | Error:
         async with ClientSession() as session:
             async with session.post(
                 url=getattr(ApiEndpoints, otp_type),
-                data=((data := ApiData.sendOTP).update({'sid': validation_sid, 'access_token': anonym_token}), data)[1],
+                data=ApiData.sendOTP | {'sid': validation_sid, 'access_token': anonym_token},
                 headers=ApiData.headers,
                 cookies=self.cookies
             ) as response:
                 self.cookies.update(response.cookies)
                 return await jsonHandler(response)
 
-    async def checkOtp(self, code: str | int, validation_sid: str, anonym_token: str, otp_type: Literal['callReset', 'sms', 'push', 'email']) -> CheckOTP | Error:
+    async def checkOTP(self, code: str | int, validation_sid: str, anonym_token: str, otp_type: Literal['callreset', 'sms', 'push', 'email']) -> CheckOTP | Error:
         async with ClientSession() as session:
             async with session.post(
                 url=ApiEndpoints.checkOTP,
-                data=((data := ApiData.checkOTP).update({'code': code, 'sid': validation_sid, 'access_token': anonym_token, 'verification_method': otp_type}), data)[1],
+                data=ApiData.checkOTP | {'code': code, 'sid': validation_sid, 'access_token': anonym_token, 'verification_method': otp_type},
                 headers=ApiData.headers,
                 cookies=self.cookies
             ) as response:
@@ -83,7 +82,7 @@ class Client:
         async with ClientSession() as session:
             async with session.post(
                 url=ApiEndpoints.authorize,
-                data=((data := ApiData.authorize).update({'username': self.login, 'password': self.password, 'sid': sid, 'anonymous_token': anonym_token}), data)[1],
+                data=ApiData.authorize | {'username': self.login, 'password': self.password, 'sid': sid, 'anonymous_token': anonym_token},
                 headers=ApiData.headers,
                 cookies=self.cookies
             ) as response:
@@ -95,8 +94,8 @@ class Client:
         validate = await self.validateAccount(anonym_token)
         validation_sid = validate.get('sid')
         otp_type = validate.get('next_step').get('verification_method')
-        await self.sendOtp(validation_sid, anonym_token, otp_type)
+        await self.sendOTP(validation_sid, anonym_token, otp_type)
         await self.verificationMethods(validation_sid, anonym_token)
-        sid = (await self.checkOtp(input('code: '), validation_sid, anonym_token, otp_type)).get('sid')
+        sid = (await self.checkOTP(input('code: '), validation_sid, anonym_token, otp_type)).get('sid')
         print(await self.webToken(sid, anonym_token))
         print(self.cookies)
